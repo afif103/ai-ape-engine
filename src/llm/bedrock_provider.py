@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Optional
 
 import boto3
 
@@ -30,7 +30,7 @@ class BedrockProvider(BaseLLMProvider):
         temperature: float = 0.7,
         max_tokens: int = 4096,
         region_name: str = "us-east-1",
-        guardrail_id: str | None = None,
+        guardrail_id: Optional[str] = None,
         guardrail_version: str = "DRAFT",
     ):
         """Initialize Bedrock provider.

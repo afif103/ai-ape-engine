@@ -1,6 +1,6 @@
 """FastAPI dependency injection."""
 
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy import select
@@ -14,7 +14,7 @@ from src.models.user import User
 
 
 async def get_current_user(
-    authorization: Annotated[str | None, Header()] = None, db: AsyncSession = Depends(get_db)
+    authorization: Annotated[Optional[str], Header()] = None, db: AsyncSession = Depends(get_db)
 ) -> User:
     """Get current authenticated user from JWT token.
 
@@ -69,8 +69,8 @@ async def get_current_user(
 
 
 async def get_optional_user(
-    authorization: Annotated[str | None, Header()] = None, db: AsyncSession = Depends(get_db)
-) -> User | None:
+    authorization: Annotated[Optional[str], Header()] = None, db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
     """Get current user if authenticated, None otherwise.
 
     Args:
@@ -89,5 +89,5 @@ async def get_optional_user(
 # Type aliases for cleaner route signatures
 DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
-OptionalUser = Annotated[User | None, Depends(get_optional_user)]
+OptionalUser = Annotated[Optional[User], Depends(get_optional_user)]
 RedisClient = Annotated[object, Depends(get_redis)]

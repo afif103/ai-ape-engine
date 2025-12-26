@@ -1,5 +1,6 @@
 """Conversation repository for chat operations."""
 
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import desc, select
@@ -12,7 +13,7 @@ class ConversationRepository:
     """Repository for conversation database operations."""
 
     @staticmethod
-    async def create(db: AsyncSession, user_id: UUID, title: str | None = None) -> Conversation:
+    async def create(db: AsyncSession, user_id: UUID, title: Optional[str] = None) -> Conversation:
         """Create a new conversation.
 
         Args:
@@ -30,7 +31,7 @@ class ConversationRepository:
         return conversation
 
     @staticmethod
-    async def get_by_id(db: AsyncSession, conversation_id: UUID) -> Conversation | None:
+    async def get_by_id(db: AsyncSession, conversation_id: UUID) -> Optional[Conversation]:
         """Get conversation by ID.
 
         Args:
@@ -70,7 +71,7 @@ class ConversationRepository:
     @staticmethod
     async def update_title(
         db: AsyncSession, conversation_id: UUID, title: str
-    ) -> Conversation | None:
+    ) -> Optional[Conversation]:
         """Update conversation title.
 
         Args:

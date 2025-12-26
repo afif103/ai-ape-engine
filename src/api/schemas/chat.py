@@ -1,6 +1,7 @@
 """Chat API request and response schemas."""
 
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -30,7 +31,7 @@ class MessageResponse(BaseModel):
 class ConversationCreate(BaseModel):
     """Request schema for creating a conversation."""
 
-    title: str | None = Field(None, max_length=500, description="Optional conversation title")
+    title: Optional[str] = Field(None, max_length=500, description="Optional conversation title")
 
 
 class ConversationResponse(BaseModel):

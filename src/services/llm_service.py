@@ -1,7 +1,7 @@
 """Multi-provider LLM service with automatic fallback."""
 
 import logging
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Optional
 
 from src.config import get_settings
 from src.llm.base import BaseLLMProvider, LLMMessage, LLMResponse
@@ -164,7 +164,7 @@ class LLMService:
 
 
 # Global service instance (lazy loaded)
-_llm_service: LLMService | None = None
+_llm_service: Optional[LLMService] = None
 
 
 def get_llm_service() -> LLMService:

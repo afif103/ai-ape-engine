@@ -1,7 +1,7 @@
 """Research service using Firecrawl for web scraping."""
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from firecrawl import FirecrawlApp
 
@@ -111,7 +111,7 @@ class ResearchService:
     async def research_topic(
         self,
         query: str,
-        urls: list[str] | None = None,
+        urls: Optional[list[str]] = None,
         max_sources: int = 5,
     ) -> dict:
         """Research a topic using web sources and AI synthesis.

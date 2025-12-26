@@ -1,7 +1,7 @@
 """Chat service for conversation management."""
 
 import logging
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +26,7 @@ class ChatService:
         self.db = db
         self.llm_service = get_llm_service()
 
-    async def create_conversation(self, user_id: UUID, title: str | None = None) -> UUID:
+    async def create_conversation(self, user_id: UUID, title: Optional[str] = None) -> UUID:
         """Create a new conversation.
 
         Args:
