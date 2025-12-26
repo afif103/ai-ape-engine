@@ -101,7 +101,7 @@ alembic upgrade head
 
 - [Requirements](docs/requirements.json)
 - [Architecture](docs/architecture.md)
-- AGENTS.md - Development framework (kept locally, not in repository)
+
 
 ## License
 
