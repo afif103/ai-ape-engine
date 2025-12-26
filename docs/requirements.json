@@ -1,0 +1,253 @@
+{
+  "project": "APE - AI Productivity Engine",
+  "version": "1.0.0",
+  "created": "2024-12-25",
+  "status": "approved",
+  
+  "problem_statement": "Users currently need 5-10 different AI tools (ChatGPT, Midjourney, research tools, OCR services, automation platforms) to complete complex tasks. This causes context switching, data fragmentation, increased costs, and workflow inefficiency. APE consolidates these capabilities into one unified platform.",
+  
+  "target_users": [
+    {
+      "persona": "Startup Founder",
+      "needs": "Quick prototyping, content creation, research, automation",
+      "pain_points": "Limited budget, needs multiple tools, no time to learn each"
+    },
+    {
+      "persona": "Developer/Technical Team",
+      "needs": "Code generation, review, documentation, debugging",
+      "pain_points": "Context switching between IDE and AI tools"
+    },
+    {
+      "persona": "Content Creator",
+      "needs": "Research, writing, image/video generation, voice content",
+      "pain_points": "Multiple subscriptions, inconsistent quality"
+    },
+    {
+      "persona": "Business Analyst",
+      "needs": "Data extraction, document processing, reporting",
+      "pain_points": "Manual data entry, unstructured documents"
+    },
+    {
+      "persona": "Customer Support Manager",
+      "needs": "AI chatbots, knowledge base, automated responses",
+      "pain_points": "High ticket volume, repetitive questions"
+    }
+  ],
+  
+  "features": {
+    "must_have": [
+      {
+        "id": "F001",
+        "name": "AI Chat Engine",
+        "description": "Core conversational AI with reasoning, planning, and context management",
+        "acceptance_criteria": [
+          "Given a user message, When sent to chat endpoint, Then AI responds within 3 seconds",
+          "Given a conversation history, When user asks follow-up, Then AI maintains context",
+          "Given multiple LLM providers configured, When primary fails, Then fallback is used",
+          "Given a chat session, When user returns later, Then conversation history is preserved"
+        ],
+        "priority": 1
+      },
+      {
+        "id": "F002",
+        "name": "User Authentication",
+        "description": "Secure user registration, login, and session management",
+        "acceptance_criteria": [
+          "Given valid credentials, When user logs in, Then JWT token is returned",
+          "Given invalid credentials, When user logs in, Then 401 error is returned",
+          "Given expired token, When API called, Then 401 with refresh hint returned",
+          "Given user email, When password reset requested, Then reset link sent"
+        ],
+        "priority": 1
+      },
+      {
+        "id": "F003",
+        "name": "Deep Research Module",
+        "description": "Web scraping, content analysis, and citation generation",
+        "acceptance_criteria": [
+          "Given a research query, When submitted, Then relevant sources are found",
+          "Given web sources, When analyzed, Then summary with citations is generated",
+          "Given research results, When exported, Then markdown/PDF output is correct",
+          "Given rate limits, When exceeded, Then graceful degradation occurs"
+        ],
+        "priority": 2
+      },
+      {
+        "id": "F004",
+        "name": "Smart Data Extraction",
+        "description": "Universal data extraction from documents AND web pages with user-defined schemas, AI-assisted schema detection, validation rules, and multiple output formats",
+        "capabilities": {
+          "mvp": [
+            "Document OCR (PDF, images) via AWS Textract",
+            "Single-page web scraping via Firecrawl",
+            "User-defined column schemas for ANY content type",
+            "AI-assisted schema auto-detection",
+            "Validation rules (type, required, min/max, regex)",
+            "Output formats: JSON, CSV, Excel"
+          ],
+          "post_mvp": [
+            "Multi-page crawling with pagination",
+            "Google Sheets direct export",
+            "Scheduled/recurring scrapes"
+          ]
+        },
+        "acceptance_criteria": [
+          "Given an image/PDF, When uploaded with schema, Then matching fields are extracted",
+          "Given a URL and column schema, When submitted, Then data rows are extracted",
+          "Given any content type (jobs, products, articles, etc.), When schema defined, Then AI extracts matching data",
+          "Given a URL without schema, When auto-detect requested, Then AI suggests appropriate columns",
+          "Given validation rules, When data extracted, Then invalid rows are flagged with reasons",
+          "Given extracted data, When export requested, Then JSON/CSV/Excel output is correctly formatted",
+          "Given rate limits on target site, When encountered, Then graceful backoff is applied"
+        ],
+        "example_use_cases": [
+          "Scrape job listings: Title, Company, Salary, Location",
+          "Extract product data: Name, Price, Rating, Reviews",
+          "Parse real estate: Address, Price, Bedrooms, Sqft",
+          "Collect news: Headline, Author, Date, Summary",
+          "Process invoices: Vendor, Amount, Date, Line Items"
+        ],
+        "priority": 2
+      },
+      {
+        "id": "F005",
+        "name": "Code Assistant",
+        "description": "Code generation, review, explanation, multi-language support",
+        "acceptance_criteria": [
+          "Given a code request, When submitted, Then syntactically correct code is generated",
+          "Given existing code, When review requested, Then issues and improvements identified",
+          "Given code snippet, When explanation requested, Then clear explanation provided",
+          "Given any programming language, When detected, Then appropriate handling applied"
+        ],
+        "priority": 2
+      }
+    ],
+    "nice_to_have": [
+      {
+        "id": "F006",
+        "name": "Media Generation",
+        "description": "AI images, video creation, text-to-speech",
+        "acceptance_criteria": [
+          "Given image prompt, When submitted, Then image generated within 30 seconds",
+          "Given text content, When TTS requested, Then audio file generated",
+          "Given image/script, When video requested, Then video generated"
+        ],
+        "priority": 3
+      },
+      {
+        "id": "F007",
+        "name": "Chatbot Builder",
+        "description": "Custom assistant creation, knowledge base integration",
+        "acceptance_criteria": [
+          "Given configuration, When chatbot created, Then deployable endpoint available",
+          "Given documents, When uploaded to knowledge base, Then chatbot uses them",
+          "Given chatbot, When embedded in website, Then widget functions correctly"
+        ],
+        "priority": 3
+      },
+      {
+        "id": "F008",
+        "name": "Workflow Automation",
+        "description": "Multi-step task orchestration, quality gates",
+        "acceptance_criteria": [
+          "Given workflow definition, When triggered, Then steps execute in order",
+          "Given quality gate, When check fails, Then workflow pauses for review",
+          "Given workflow history, When queried, Then audit trail is complete"
+        ],
+        "priority": 4
+      }
+    ]
+  },
+  
+  "success_metrics": [
+    {
+      "metric": "API Response Time",
+      "target": "< 200ms for non-AI endpoints, < 5s for AI endpoints",
+      "measurement": "P95 latency via monitoring"
+    },
+    {
+      "metric": "Test Coverage",
+      "target": "> 80%",
+      "measurement": "pytest-cov report"
+    },
+    {
+      "metric": "Uptime",
+      "target": "> 99.5%",
+      "measurement": "Health check monitoring"
+    },
+    {
+      "metric": "Error Rate",
+      "target": "< 1%",
+      "measurement": "Error logs / total requests"
+    },
+    {
+      "metric": "User Satisfaction",
+      "target": "AI responses rated helpful > 80%",
+      "measurement": "Feedback mechanism"
+    }
+  ],
+  
+  "risks": [
+    {
+      "risk": "LLM API costs exceed budget",
+      "probability": "Medium",
+      "impact": "High",
+      "mitigation": "Implement caching, rate limiting, cost monitoring alerts"
+    },
+    {
+      "risk": "LLM provider outage",
+      "probability": "Low",
+      "impact": "High",
+      "mitigation": "Multi-provider fallback (Groq -> Bedrock -> OpenAI)"
+    },
+    {
+      "risk": "Data privacy/GDPR violations",
+      "probability": "Medium",
+      "impact": "Critical",
+      "mitigation": "PII detection, data encryption, audit logging, user consent"
+    },
+    {
+      "risk": "Prompt injection attacks",
+      "probability": "High",
+      "impact": "Medium",
+      "mitigation": "AWS Bedrock Guardrails, input sanitization, output filtering"
+    },
+    {
+      "risk": "Scope creep delays delivery",
+      "probability": "High",
+      "impact": "Medium",
+      "mitigation": "Strict must-have vs nice-to-have separation, phased releases"
+    }
+  ],
+  
+  "constraints": [
+    "Solo developer - must prioritize ruthlessly",
+    "Moderate AWS budget - optimize for cost efficiency",
+    "4-8 week timeline for MVP",
+    "Must support multiple LLM providers",
+    "Must be production-ready (not just a prototype)"
+  ],
+  
+  "non_functional_requirements": {
+    "security": [
+      "HTTPS/TLS everywhere",
+      "JWT authentication with short-lived tokens",
+      "Rate limiting per user/API key",
+      "Input validation on all endpoints",
+      "PII detection and handling",
+      "Audit logging for compliance"
+    ],
+    "scalability": [
+      "Stateless API design",
+      "Horizontal scaling via containers",
+      "Database connection pooling",
+      "Redis caching layer"
+    ],
+    "maintainability": [
+      "Clean architecture with separation of concerns",
+      "Comprehensive documentation",
+      "Type hints throughout codebase",
+      "Consistent coding standards (ruff)"
+    ]
+  }
+}

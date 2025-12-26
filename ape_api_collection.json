@@ -1,0 +1,438 @@
+# APE Platform - Testing Guide
+
+## Quick Start
+
+### Prerequisites
+- Docker and Docker Compose installed
+- All containers running: `docker-compose up -d`
+
+### Get Authentication Token
+```bash
+# Login and get JWT token
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Test123!"}' \
+  | jq -r '.access_token')
+
+echo "JWT Token: $TOKEN"
+```
+
+## API Endpoints Testing
+
+### 1. Chat API
+
+#### Create Conversation
+```bash
+curl -X POST http://localhost:8000/api/v1/chat/conversations \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test Conversation"}'
+```
+
+#### Send Message
+```bash
+CONV_ID="your-conversation-id-here"
+curl -X POST "http://localhost:8000/api/v1/chat/conversations/$CONV_ID/messages" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Hello, how are you?"}'
+```
+
+#### List Conversations
+```bash
+curl -X GET "http://localhost:8000/api/v1/chat/conversations?limit=10" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+#### Get Conversation with Messages
+```bash
+curl -X GET "http://localhost:8000/api/v1/chat/conversations/$CONV_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+#### Delete Conversation
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/chat/conversations/$CONV_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 2. Code Assistant API
+
+#### Generate Code
+```bash
+curl -X POST http://localhost:8000/api/v1/code/generate \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "Create a function to calculate factorial using recursion",
+    "language": "python",
+    "context": "Include type hints and docstring"
+  }'
+```
+
+#### Review Code
+```bash
+curl -X POST http://localhost:8000/api/v1/code/review \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "def divide(a, b): return a / b",
+    "language": "python",
+    "focus": "error handling"
+  }'
+```
+
+#### Explain Code
+```bash
+curl -X POST http://localhost:8000/api/v1/code/explain \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "def quicksort(arr): return arr if len(arr) <= 1 else quicksort([x for x in arr[1:] if x <= arr[0]]) + [arr[0]] + quicksort([x for x in arr[1:] if x > arr[0]])",
+    "language": "python",
+    "level": "beginner"
+  }'
+```
+
+#### Fix Code
+```bash
+curl -X POST http://localhost:8000/api/v1/code/fix \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "def hello(name): print(\"Hello \" + name",
+    "error": "SyntaxError: unexpected EOF while parsing",
+    "language": "python"
+  }'
+```
+
+### 3. Research API
+
+#### Scrape Single URL
+```bash
+curl -X POST http://localhost:8000/api/v1/research/scrape \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
+```
+
+#### Research Topic
+```bash
+curl -X POST http://localhost:8000/api/v1/research/topic \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What is the purpose of example.com?",
+    "urls": ["https://example.com"],
+    "max_sources": 1
+  }'
+```
+
+## Expected Responses
+
+### Success Responses
+
+#### Chat Message Response
+```json
+{
+  "message": {
+    "id": "uuid",
+    "conversation_id": "uuid",
+    "role": "assistant",
+    "content": "AI response here...",
+    "input_tokens": 0,
+    "output_tokens": 150,
+    "created_at": "2025-12-25T08:42:20.593753"
+  },
+  "provider": "groq",
+  "model": "llama-3.1-8b-instant"
+}
+```
+
+#### Code Generation Response
+```json
+{
+  "content": "```python\ndef factorial(n: int) -> int:\n    \"\"\"Calculate factorial using recursion.\"\"\"\n    return 1 if n <= 1 else n * factorial(n - 1)\n```",
+  "language": "python",
+  "provider": "groq",
+  "model": "llama-3.1-8b-instant"
+}
+```
+
+#### Research Response
+```json
+{
+  "url": "https://example.com",
+  "content": "# Example Domain\n\nThis domain is for use in...",
+  "metadata": {
+    "title": "Example Domain"
+  }
+}
+```
+
+### Error Responses
+
+#### Authentication Error
+```json
+{
+  "detail": "Invalid token: Signature has expired."
+}
+```
+
+#### Validation Error
+```json
+{
+  "detail": [
+    {
+      "type": "missing",
+      "loc": ["body", "content"],
+      "msg": "Field required"
+    }
+  ]
+}
+```
+
+#### Not Found Error
+```json
+{
+  "detail": "Conversation not found or access denied"
+}
+```
+
+## Test Scenarios
+
+### Happy Path Tests
+1. ✅ Complete chat conversation flow
+2. ✅ Code generation and review cycle
+3. ✅ Research with multiple sources
+4. ✅ User authentication flow
+
+### Edge Cases
+1. **Empty message**: Should return 422 validation error
+2. **Very long content**: Should handle up to 50,000 characters
+3. **Invalid URL**: Should return 422 validation error
+4. **Access other user's data**: Should return 404
+5. **Expired token**: Should return 401
+
+### Performance Tests
+1. **Concurrent requests**: Multiple users chatting simultaneously
+2. **Large code review**: 10,000+ lines of code
+3. **Multiple research sources**: 5+ URLs in one request
+
+## Troubleshooting
+
+### Common Issues
+
+#### "Failed to create conversation"
+- **Cause**: Database connection issue
+- **Check**: `docker logs ape_api` for database errors
+- **Fix**: Restart containers: `docker-compose restart`
+
+#### "Invalid token"
+- **Cause**: JWT expired (15 minutes default)
+- **Fix**: Login again to get new token
+
+#### "Research failed"
+- **Cause**: Firecrawl API rate limit or network issue
+- **Check**: `docker logs ape_api` for Firecrawl errors
+- **Fix**: Wait and retry, or check API key
+
+#### "Code generation failed"
+- **Cause**: Groq API rate limit or network issue
+- **Check**: `docker logs ape_api` for LLM errors
+- **Fix**: Wait and retry
+
+### Debug Commands
+
+```bash
+# Check container status
+docker ps --format "table {{.Names}}\t{{.Status}}"
+
+# View API logs
+docker logs ape_api --tail 50
+
+# Check database
+docker exec ape_postgres psql -U ape_user -d ape_db -c "SELECT COUNT(*) FROM users;"
+
+# Test health endpoint
+curl http://localhost:8000/health
+```
+
+## Load Testing
+
+### Basic Load Test
+```bash
+# Install hey for load testing
+# Test 100 requests with 10 concurrent
+hey -n 100 -c 10 http://localhost:8000/health
+
+# Test chat endpoint (requires token)
+hey -n 50 -c 5 -H "Authorization: Bearer $TOKEN" \
+  -X POST http://localhost:8000/api/v1/chat/conversations \
+  -d '{"title":"Load Test"}'
+```
+
+### Expected Performance
+- **Health check**: < 50ms
+- **Authentication**: < 100ms
+- **Chat message**: 2-5 seconds (LLM dependent)
+- **Code generation**: 3-8 seconds
+- **Research**: 4-10 seconds
+
+## Integration Testing
+
+### Full User Journey Test
+```bash
+#!/bin/bash
+# Complete end-to-end test
+
+echo "=== APE Platform End-to-End Test ==="
+
+# 1. Register/Login
+echo "1. Authentication..."
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Test123!"}' \
+  | jq -r '.access_token')
+
+if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+  echo "❌ Authentication failed"
+  exit 1
+fi
+echo "✅ Authentication successful"
+
+# 2. Create conversation
+echo "2. Creating conversation..."
+CONV_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/chat/conversations \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"End-to-End Test"}')
+
+CONV_ID=$(echo $CONV_RESPONSE | jq -r '.id')
+if [ "$CONV_ID" = "null" ] || [ -z "$CONV_ID" ]; then
+  echo "❌ Conversation creation failed"
+  exit 1
+fi
+echo "✅ Conversation created: $CONV_ID"
+
+# 3. Send chat message
+echo "3. Testing chat..."
+CHAT_RESPONSE=$(curl -s -X POST "http://localhost:8000/api/v1/chat/conversations/$CONV_ID/messages" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Hello! What is 2+2?"}')
+
+if echo "$CHAT_RESPONSE" | jq -e '.message' > /dev/null; then
+  echo "✅ Chat working"
+else
+  echo "❌ Chat failed"
+  exit 1
+fi
+
+# 4. Test code generation
+echo "4. Testing code generation..."
+CODE_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/code/generate \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"description":"Print hello world","language":"python"}')
+
+if echo "$CODE_RESPONSE" | jq -e '.content' > /dev/null; then
+  echo "✅ Code generation working"
+else
+  echo "❌ Code generation failed"
+  exit 1
+fi
+
+# 5. Test research
+echo "5. Testing research..."
+RESEARCH_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/research/scrape \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}')
+
+if echo "$RESEARCH_RESPONSE" | jq -e '.content' > /dev/null; then
+  echo "✅ Research working"
+else
+  echo "❌ Research failed"
+  exit 1
+fi
+
+echo ""
+echo "🎉 ALL TESTS PASSED! APE Platform is working correctly."
+```
+
+## API Collection (Thunder Client)
+
+### Environment Variables
+```json
+{
+  "base_url": "http://localhost:8000",
+  "api_version": "v1",
+  "test_email": "test@example.com",
+  "test_password": "Test123!",
+  "jwt_token": "{{token}}"
+}
+```
+
+### Authentication Requests
+```json
+{
+  "name": "Login",
+  "method": "POST",
+  "url": "{{base_url}}/api/{{api_version}}/auth/login",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "email": "{{test_email}}",
+    "password": "{{test_password}}"
+  },
+  "tests": [
+    {
+      "name": "Check status 200",
+      "type": "response_code",
+      "value": 200
+    },
+    {
+      "name": "Set token variable",
+      "type": "set_env_var",
+      "key": "token",
+      "value": "{{response.body.access_token}}"
+    }
+  ]
+}
+```
+
+## Monitoring & Logs
+
+### Key Metrics to Monitor
+- Response times per endpoint
+- Error rates
+- Token usage (LLM costs)
+- Database connection pool usage
+- Memory/CPU usage per container
+
+### Log Analysis
+```bash
+# Search for errors
+docker logs ape_api | grep -i error
+
+# Check LLM usage
+docker logs ape_api | grep "Successfully generated response"
+
+# Monitor database queries
+docker logs ape_api | grep "SELECT\|INSERT\|UPDATE"
+```
+
+## Next Steps
+
+1. **Automated Testing**: Convert manual tests to pytest
+2. **CI/CD Integration**: Add tests to GitHub Actions
+3. **Performance Monitoring**: Set up APM (Application Performance Monitoring)
+4. **Security Testing**: Penetration testing and vulnerability scanning
+5. **User Acceptance Testing**: Demo to stakeholders
+
+---
+
+**This guide provides everything needed to test and validate the APE platform MVP.**</content>
+<parameter name="filePath">./TESTING_GUIDE.md
