@@ -6,7 +6,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.api.routes import auth, chat, code, extraction, export, health, research
+from src.api.routes import (
+    auth,
+    chat,
+    code,
+    extraction,
+    export,
+    health,
+    instruction,
+    processing,
+    research,
+)
 from src.config import get_settings
 from src.core.exceptions import APEException
 from src.core.logging import get_logger, setup_logging
@@ -103,6 +113,8 @@ app.include_router(chat.router, prefix=f"{settings.api_v1_prefix}", tags=["Chat"
 app.include_router(code.router, prefix=f"{settings.api_v1_prefix}", tags=["Code"])
 app.include_router(research.router, prefix=f"{settings.api_v1_prefix}", tags=["Research"])
 app.include_router(extraction.router, prefix=f"{settings.api_v1_prefix}", tags=["Extraction"])
+app.include_router(instruction.router, prefix=f"{settings.api_v1_prefix}", tags=["Instruction"])
+app.include_router(processing.router, prefix=f"{settings.api_v1_prefix}", tags=["Processing"])
 app.include_router(export.router, prefix=f"{settings.api_v1_prefix}", tags=["Export"])
 
 
