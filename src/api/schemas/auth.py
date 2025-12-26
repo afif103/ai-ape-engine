@@ -1,5 +1,6 @@
 """Authentication schemas."""
 
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_serializer
@@ -10,7 +11,7 @@ class RegisterRequest(BaseModel):
 
     email: EmailStr
     password: str = Field(..., min_length=8)
-    name: str | None = None
+    name: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -33,7 +34,7 @@ class UserResponse(BaseModel):
 
     id: UUID
     email: str
-    name: str | None
+    name: Optional[str]
     is_active: bool
     is_verified: bool
 

@@ -2,6 +2,8 @@
 
 import logging
 
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
@@ -17,7 +19,7 @@ class CodeGenerateRequest(BaseModel):
 
     description: str = Field(..., min_length=10, max_length=5000)
     language: str = Field(default="python", max_length=50)
-    context: str | None = Field(None, max_length=5000)
+    context: Optional[str] = Field(None, max_length=5000)
 
 
 class CodeReviewRequest(BaseModel):
@@ -25,7 +27,7 @@ class CodeReviewRequest(BaseModel):
 
     code: str = Field(..., min_length=1, max_length=50000)
     language: str = Field(default="python", max_length=50)
-    focus: str | None = Field(None, max_length=500)
+    focus: Optional[str] = Field(None, max_length=500)
 
 
 class CodeExplainRequest(BaseModel):

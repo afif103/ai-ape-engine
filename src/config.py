@@ -1,7 +1,7 @@
 """Configuration management for APE."""
 
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -30,19 +30,19 @@ class Settings(BaseSettings):
     redis_max_connections: int = 10
 
     # LLM Providers
-    groq_api_key: str | None = None
-    aws_access_key_id: str | None = None
-    aws_secret_access_key: str | None = None
+    groq_api_key: Optional[str] = None
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
     aws_default_region: str = "us-east-1"
-    openai_api_key: str | None = None
+    openai_api_key: Optional[str] = None
 
     # External Services
-    firecrawl_api_key: str | None = None
+    firecrawl_api_key: Optional[str] = None
 
     # LangSmith (optional)
     langchain_tracing_v2: bool = False
     langchain_project: str = "ape-dev"
-    langchain_api_key: str | None = None
+    langchain_api_key: Optional[str] = None
 
     # Security
     jwt_secret_key: str = Field(..., min_length=32)
@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     chroma_port: int = 8001
 
     # S3 (optional)
-    s3_bucket_name: str | None = None
+    s3_bucket_name: Optional[str] = None
     s3_region: str = "us-east-1"
 
     # CORS

@@ -1,6 +1,7 @@
 """Code assistant service for code generation, review, and explanation."""
 
 import logging
+from typing import Optional
 
 from src.llm.base import LLMMessage
 from src.services.llm_service import get_llm_service
@@ -19,7 +20,7 @@ class CodeService:
         self,
         description: str,
         language: str = "python",
-        context: str | None = None,
+        context: Optional[str] = None,
     ) -> dict:
         """Generate code from description.
 
@@ -63,7 +64,7 @@ Provide:
         self,
         code: str,
         language: str = "python",
-        focus: str | None = None,
+        focus: Optional[str] = None,
     ) -> dict:
         """Review code for issues and improvements.
 

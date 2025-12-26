@@ -1,5 +1,6 @@
 """Message repository for chat operations."""
 
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -48,7 +49,7 @@ class MessageRepository:
 
     @staticmethod
     async def get_conversation_messages(
-        db: AsyncSession, conversation_id: UUID, limit: int | None = None
+        db: AsyncSession, conversation_id: UUID, limit: Optional[int] = None
     ) -> list[Message]:
         """Get all messages in a conversation (chronological order).
 
@@ -85,7 +86,7 @@ class MessageRepository:
         return list(result.scalars().all())
 
     @staticmethod
-    async def get_by_id(db: AsyncSession, message_id: UUID) -> Message | None:
+    async def get_by_id(db: AsyncSession, message_id: UUID) -> Optional[Message]:
         """Get message by ID.
 
         Args:

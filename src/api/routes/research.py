@@ -3,6 +3,8 @@
 import logging
 
 from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from typing import Optional
+
 from pydantic import BaseModel, Field, HttpUrl
 
 from src.dependencies import CurrentUser
@@ -16,7 +18,7 @@ class ResearchRequest(BaseModel):
     """Request for research."""
 
     query: str = Field(..., min_length=10, max_length=5000)
-    urls: list[HttpUrl] | None = Field(None, max_items=10)
+    urls: Optional[list[HttpUrl]] = Field(None, max_items=10)
     max_sources: int = Field(default=5, ge=1, le=10)
 
 

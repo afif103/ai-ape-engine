@@ -1,10 +1,12 @@
 """Custom exceptions for APE."""
 
+from typing import Optional
+
 
 class APEException(Exception):
     """Base exception for all APE errors."""
 
-    def __init__(self, message: str, details: dict | None = None):
+    def __init__(self, message: str, details: Optional[dict] = None):
         self.message = message
         self.details = details or {}
         super().__init__(self.message)
