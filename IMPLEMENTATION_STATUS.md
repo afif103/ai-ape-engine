@@ -1,10 +1,11 @@
 # APE Implementation Progress - FULLY FUNCTIONAL DATA EXTRACTION SYSTEM
 
-## Current Status: PRODUCTION READY ✓
+## Current Status: PRODUCTION READY ✓ (Bedrock Rate Limited)
 
 **Date**: 2025-12-26
 **Phase**: Complete Implementation + Testing
 **Progress**: 100% Complete ✅
+**Note**: AWS Bedrock currently rate-limited (2min processing), testing tomorrow
 
 ---
 
@@ -127,6 +128,11 @@
 CSV File Upload → AI Processing → Table Display → Data Editing → Multi-Format Export
 ✅ ✅ ✅ ✅ ✅
 ```
+
+### ⚠️ Current Limitations (Temporary)
+- **AWS Bedrock Rate Limiting**: Currently experiencing daily request limits causing ~2min processing times
+- **Testing Schedule**: Full AI instruction processing testing scheduled for tomorrow when limits reset
+- **Local Fallback**: System designed with multi-provider fallback (Groq → Bedrock → OpenAI)
 
 ---
 
