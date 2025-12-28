@@ -18,29 +18,40 @@ router = APIRouter(prefix="/export", tags=["export"])
 async def export_csv(data: Dict[str, Any], user: CurrentUser) -> StreamingResponse:
     """Export data as CSV file.
 
-    Expects data in the format returned by extraction service.
+    Handles both tabular data and text-only data.
     """
     try:
-        if not data.get("tables") or len(data["tables"]) == 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No tabular data available for CSV export",
-            )
-
-        # Use first table for CSV export
-        table = data["tables"][0]
-
         # Create CSV content
         output = StringIO()
         writer = csv.writer(output)
 
-        # Write headers
-        writer.writerow(table["columns"])
+        # Check if we have tabular data
+        if data.get("tables") and len(data["tables"]) > 0:
+            # Use first table for CSV export
+            table = data["tables"][0]
 
-        # Write data rows
-        for row in table["rows"]:
-            csv_row = [str(row.get(col, "")) for col in table["columns"]]
-            writer.writerow(csv_row)
+            # Write headers
+            writer.writerow(table["columns"])
+
+            # Write data rows
+            for row in table["rows"]:
+                csv_row = [str(row.get(col, "")) for col in table["columns"]]
+                writer.writerow(csv_row)
+        else:
+            # Handle text-only data - create a simple single-column table
+            writer.writerow(["Content"])
+
+            # Add text content if available
+            if data.get("text"):
+                # Split text into lines and create rows
+                lines = data["text"].split("\n")
+                for line in lines:
+                    if line.strip():  # Skip empty lines
+                        writer.writerow([line.strip()])
+
+            # If no text either, add a placeholder
+            if not data.get("text"):
+                writer.writerow(["No content available"])
 
         csv_content = output.getvalue()
         output.close()
@@ -49,7 +60,11 @@ async def export_csv(data: Dict[str, Any], user: CurrentUser) -> StreamingRespon
         def generate():
             yield csv_content
 
-        filename = f"export_{table.get('name', 'data')}.csv"
+        # Set filename based on available data
+        if data.get("tables") and len(data["tables"]) > 0:
+            filename = f"export_{data['tables'][0].get('name', 'data')}.csv"
+        else:
+            filename = "export_text.csv"
 
         return StreamingResponse(
             generate(),
@@ -89,12 +104,6 @@ async def export_json(data: Dict[str, Any], user: CurrentUser) -> StreamingRespo
 async def export_excel(data: Dict[str, Any], user: CurrentUser) -> StreamingResponse:
     """Export data as Excel file (.xlsx)."""
     try:
-        if not data.get("tables") or len(data["tables"]) == 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No tabular data available for Excel export",
-            )
-
         # Create Excel file using openpyxl
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill
@@ -103,37 +112,55 @@ async def export_excel(data: Dict[str, Any], user: CurrentUser) -> StreamingResp
         ws = wb.active
         ws.title = "Extracted Data"
 
-        # Process each table
-        for table_idx, table in enumerate(data["tables"]):
-            if table_idx > 0:
-                # Create new sheet for additional tables
-                ws = wb.create_sheet(title=f"Table {table_idx + 1}")
+        # Check if we have tabular data
+        if data.get("tables") and len(data["tables"]) > 0:
+            # Process each table
+            for table_idx, table in enumerate(data["tables"]):
+                if table_idx > 0:
+                    # Create new sheet for additional tables
+                    ws = wb.create_sheet(title=f"Table {table_idx + 1}")
 
-            # Write headers with styling
-            header_font = Font(bold=True, color="FFFFFF")
-            header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-
-            for col_idx, col_name in enumerate(table["columns"], 1):
-                cell = ws.cell(row=1, column=col_idx, value=col_name)
-                cell.font = header_font
-                cell.fill = header_fill
-
-            # Write data rows
-            for row_idx, row_data in enumerate(table["rows"], 2):
-                for col_idx, col_name in enumerate(table["columns"], 1):
-                    value = row_data.get(col_name, "")
-                    ws.cell(row=row_idx, column=col_idx, value=value)
-
-            # Auto-adjust column widths
-            for col_idx, col_name in enumerate(table["columns"], 1):
-                column_letter = ws.cell(row=1, column=col_idx).column_letter
-                max_length = (
-                    max(len(str(row_data.get(col_name, ""))) for row_data in table["rows"])
-                    if table["rows"]
-                    else 10
+                # Write headers with styling
+                header_font = Font(bold=True, color="FFFFFF")
+                header_fill = PatternFill(
+                    start_color="366092", end_color="366092", fill_type="solid"
                 )
-                max_length = max(max_length, len(col_name))
-                ws.column_dimensions[column_letter].width = min(max_length + 2, 50)
+
+                for col_idx, col_name in enumerate(table["columns"], 1):
+                    cell = ws.cell(row=1, column=col_idx, value=col_name)
+                    cell.font = header_font
+                    cell.fill = header_fill
+
+                # Write data rows
+                for row_idx, row_data in enumerate(table["rows"], 2):
+                    for col_idx, col_name in enumerate(table["columns"], 1):
+                        value = row_data.get(col_name, "")
+                        ws.cell(row=row_idx, column=col_idx, value=value)
+
+                # Auto-adjust column widths
+                for col_idx, col_name in enumerate(table["columns"], 1):
+                    column_letter = ws.cell(row=1, column=col_idx).column_letter
+                    max_length = (
+                        max(len(str(row_data.get(col_name, ""))) for row_data in table["rows"])
+                        if table["rows"]
+                        else 10
+                    )
+                    max_length = max(max_length, len(col_name))
+                    ws.column_dimensions[column_letter].width = min(max_length + 2, 50)
+        else:
+            # Handle text-only data - create a simple single-column sheet
+            ws.cell(row=1, column=1, value="Content")
+
+            # Add text content if available
+            if data.get("text"):
+                # Split text into lines and create rows
+                lines = data["text"].split("\n")
+                for row_idx, line in enumerate(lines, 2):
+                    if line.strip():  # Skip empty lines
+                        ws.cell(row=row_idx, column=1, value=line.strip())
+
+            # Auto-adjust column width
+            ws.column_dimensions["A"].width = 50
 
         # Save to BytesIO
         excel_buffer = BytesIO()

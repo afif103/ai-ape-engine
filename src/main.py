@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from src.api.routes import (
     auth,
+    batch,
     chat,
     code,
     extraction,
@@ -109,6 +110,7 @@ async def general_exception_handler(request, exc: Exception):
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(auth.router, prefix=f"{settings.api_v1_prefix}/auth", tags=["Authentication"])
+app.include_router(batch.router, prefix=f"{settings.api_v1_prefix}", tags=["Batch"])
 app.include_router(chat.router, prefix=f"{settings.api_v1_prefix}", tags=["Chat"])
 app.include_router(code.router, prefix=f"{settings.api_v1_prefix}", tags=["Code"])
 app.include_router(research.router, prefix=f"{settings.api_v1_prefix}", tags=["Research"])

@@ -162,6 +162,117 @@ class LLMService:
         """
         return [p.provider_name for p in self.providers]
 
+    async def process_instruction(self, instruction: str, data: Any) -> list[dict]:
+        """Process natural language instruction to generate data transformation rules.
+
+        Args:
+            instruction: Natural language instruction (e.g., "extract email addresses")
+            data: The data to be transformed
+
+        Returns:
+            List of transformation rules that can be applied to the data
+        """
+        # Create a prompt that explains the data and asks for transformation rules
+        data_preview = self._create_data_preview(data)
+
+        prompt = f"""You are an AI assistant that converts natural language instructions into data transformation rules.
+
+DATA TO TRANSFORM:
+{data_preview}
+
+INSTRUCTION: {instruction}
+
+Analyze the instruction and determine its type:
+- EXTRACTION: Find and extract specific patterns (emails, phones, names)
+- FILTERING: Show only specific content or hide unwanted parts
+- TRANSFORMATION: Modify existing data (uppercase, format changes)
+
+Return ONLY a JSON array of transformation objects. No explanations, no markdown, just JSON.
+
+Format: [{{"type": "operation_name", "description": "what it does", "parameters": {{"key": "value"}}}}]
+
+Examples:
+- "extract email addresses": [{{"type": "extract", "description": "Extract email addresses", "parameters": {{"pattern": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{(2,)}\\b"}}}}]
+- "show only name and email": [{{"type": "filter_content", "description": "Show only name and email information", "parameters": {{"fields": ["name", "email"]}}}}]
+- "show email": [{{"type": "filter_content", "description": "Show only email information", "parameters": {{"fields": ["email"]}}}}]
+- "convert to uppercase": [{{"type": "transform", "description": "Convert text to uppercase", "parameters": {{"operation": "uppercase"}}}}]
+- "remove phone numbers": [{{"type": "filter_content", "description": "Hide phone number information", "parameters": {{"exclude_fields": ["phone"]}}}}]
+
+If no transformations apply, return: []"""
+
+        messages = [LLMMessage(role="user", content=prompt)]
+
+        try:
+            response = await self.generate(messages, temperature=0.1, max_tokens=1000)
+
+            # Try to parse the response as JSON
+            import json
+            import re
+
+            content = response.content.strip()
+
+            # Try to extract JSON array from the response
+            json_match = re.search(r"\[.*\]", content, re.DOTALL)
+            if json_match:
+                content = json_match.group(0)
+
+            try:
+                transformations = json.loads(content)
+                if isinstance(transformations, list):
+                    return transformations
+                else:
+                    logger.warning(f"LLM returned non-array response: {content}")
+                    return []
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse LLM response as JSON: {content}, Error: {e}")
+                return []
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse LLM response as JSON: {response.content}")
+                return []
+
+        except Exception as e:
+            logger.error(f"Error processing instruction: {e}")
+            return []
+
+    def _create_data_preview(self, data: Any) -> str:
+        """Create a preview of the data for the LLM prompt.
+
+        Args:
+            data: The data to preview
+
+        Returns:
+            String representation of the data
+        """
+        if isinstance(data, dict):
+            preview_parts = []
+
+            # Add text preview
+            if "text" in data and data["text"]:
+                text_preview = (
+                    data["text"][:500] + "..." if len(data["text"]) > 500 else data["text"]
+                )
+                preview_parts.append(f"TEXT CONTENT:\n{text_preview}")
+
+            # Add table preview
+            if "tables" in data and data["tables"]:
+                table = data["tables"][0]  # Preview first table
+                preview_parts.append(
+                    f"TABLE DATA ({len(table.get('rows', []))} rows, {len(table.get('columns', []))} columns):"
+                )
+                preview_parts.append(f"Columns: {', '.join(table.get('columns', []))}")
+
+                # Show first few rows
+                rows = table.get("rows", [])[:3]
+                for i, row in enumerate(rows):
+                    preview_parts.append(f"Row {i + 1}: {row}")
+
+                if len(table.get("rows", [])) > 3:
+                    preview_parts.append(f"... and {len(table.get('rows', [])) - 3} more rows")
+
+            return "\n\n".join(preview_parts)
+
+        return str(data)[:1000]  # Fallback for other data types
+
 
 # Global service instance (lazy loaded)
 _llm_service: Optional[LLMService] = None

@@ -29,3 +29,4 @@ class User(BaseModel):
     )
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
     usage_records = relationship("UsageRecord", back_populates="user", cascade="all, delete-orphan")
+    batch_jobs = relationship("BatchJob", back_populates="user", cascade="all, delete-orphan")

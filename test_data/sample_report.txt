@@ -1,0 +1,30 @@
+Q4 2024 Sales Report
+
+Company Overview:
+- Total Revenue: $2,450,000
+- Growth Rate: 15.3%
+- New Customers: 234
+- Returning Customers: 1,567
+
+Top Products:
+1. Laptops - $890,000 (36% of revenue)
+2. Monitors - $456,000 (19% of revenue)  
+3. Accessories - $345,000 (14% of revenue)
+4. Software - $289,000 (12% of revenue)
+
+Regional Performance:
+- North America: $1,200,000
+- Europe: $850,000
+- Asia Pacific: $400,000
+
+Key Achievements:
+- Exceeded Q4 targets by 8%
+- Launched 3 new product lines
+- Improved customer satisfaction to 4.8/5
+- Reduced delivery times by 25%
+
+Future Goals:
+- Expand to new markets
+- Increase online presence
+- Launch mobile app
+- Implement AI-powered recommendations

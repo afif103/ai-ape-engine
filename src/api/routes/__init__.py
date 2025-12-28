@@ -2,6 +2,7 @@
 
 from . import (
     auth,
+    batch,
     chat,
     code,
     extraction,
