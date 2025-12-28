@@ -127,7 +127,7 @@ class ResearchService:
         sources = []
 
         # Scrape provided URLs
-        if urls:
+        if urls and len(urls) > 0:
             for url in urls[:max_sources]:
                 try:
                     source = await self.scrape_url(url)
@@ -135,8 +135,35 @@ class ResearchService:
                 except Exception as e:
                     logger.warning(f"Skipping {url}: {e}")
 
+        # If no URLs provided or no sources found, do general AI-powered research
         if not sources:
-            raise ValueError("No sources available for research")
+            # Use AI to provide research-based answer without specific sources
+            system_prompt = """You are a knowledgeable research assistant. Provide comprehensive, well-researched answers to questions using your training data and general knowledge. Be accurate, cite general sources when possible, and provide detailed explanations."""
+
+            user_prompt = f"""Please research and answer this question comprehensively: {query}
+
+Provide a detailed answer that includes:
+1. Direct answer to the question
+2. Supporting facts and context
+3. Related information and implications
+4. Sources or references where applicable
+
+Be thorough but concise, and ensure your answer is well-supported."""
+
+            messages = [
+                LLMMessage(role="system", content=system_prompt),
+                LLMMessage(role="user", content=user_prompt),
+            ]
+
+            response = await self.llm_service.generate(messages)
+            return {
+                "query": query,
+                "synthesis": response.content,
+                "sources": [],
+                "provider": response.provider,
+                "model": response.model,
+                "method": "ai_general",
+            }
 
         # Build context from sources
         context = "\n\n---\n\n".join(

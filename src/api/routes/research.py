@@ -18,7 +18,7 @@ class ResearchRequest(BaseModel):
     """Request for research."""
 
     query: str = Field(..., min_length=10, max_length=5000)
-    urls: Optional[list[HttpUrl]] = Field(None, max_items=10)
+    urls: Optional[list[HttpUrl]] = Field(default=[], max_items=10)
     max_sources: int = Field(default=5, ge=1, le=10)
 
 
