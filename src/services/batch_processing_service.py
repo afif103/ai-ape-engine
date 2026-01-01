@@ -113,23 +113,8 @@ class BatchProcessingService:
                 await self._process_batch_file(batch_file, batch_job_id)
 
         # Create tasks for all files
-        for file_row in files:
-            batch_file = BatchFile(
-                id=file_row[0],
-                batch_job_id=file_row[1],
-                filename=file_row[2],
-                file_size=file_row[3],
-                content_type=file_row[4],
-                status=file_row[5] or "queued",
-                progress=file_row[6] or 0.0,
-                current_step=file_row[7],
-                result=file_row[8],
-                error=file_row[9],
-                aws_services_used=file_row[10] or [],
-                cost_estimate=file_row[11] or 0.0,
-                created_at=file_row[12],
-                updated_at=file_row[13],
-            )
+        for batch_file in files:
+            # batch_file is already a BatchFile object from SQLAlchemy
             tasks.append(process_single_file(batch_file))
 
         # Wait for all files to complete
@@ -185,11 +170,14 @@ class BatchProcessingService:
             return
 
         # Count file statuses
+        # Count file statuses using proper SQLAlchemy syntax
+        from sqlalchemy import case as sql_case
+        
         result = await self.db.execute(
             select(
                 func.count(BatchFile.id).label("total"),
-                func.count(func.case((BatchFile.status == "completed", 1))).label("completed"),
-                func.count(func.case((BatchFile.status == "failed", 1))).label("failed"),
+                func.sum(sql_case((BatchFile.status == "completed", 1), else_=0)).label("completed"),
+                func.sum(sql_case((BatchFile.status == "failed", 1), else_=0)).label("failed"),
             ).where(BatchFile.batch_job_id == batch_job_id)
         )
 

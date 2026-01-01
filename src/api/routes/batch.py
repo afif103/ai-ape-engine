@@ -108,7 +108,7 @@ async def create_batch_job(
         # Start background processing
         import asyncio
 
-        asyncio.create_task(process_batch_background(batch_job.id, db))
+        asyncio.create_task(process_batch_background(batch_job.id))
 
         return {
             "message": f"Batch job '{batch_name}' created with {len(files)} files",
@@ -127,31 +127,59 @@ async def create_batch_job(
         )
 
 
-async def process_batch_background(batch_job_id: UUID, db):
-    """Process batch job in background."""
+async def process_batch_background(batch_job_id: UUID):
+    """Process batch job in background with its own DB session."""
     try:
+        from src.db.session import SessionLocal
         from src.services.batch_processing_service import BatchProcessingService
-
-        batch_service = BatchProcessingService(db)
-        await batch_service.process_batch_job(batch_job_id)
-
+        
+        # Create a new database session for background processing
+        async with SessionLocal() as db:
+            batch_service = BatchProcessingService(db)
+            await batch_service.process_batch_job(batch_job_id)
+        
         logger.info(f"Completed background processing for batch job {batch_job_id}")
-
+    
     except Exception as e:
-        logger.error(f"Error in background batch processing: {e}")
+        logger.error(f"Error in background batch processing: {e}", exc_info=True)
 
 
 @router.get("/status/{batch_job_id}")
 async def get_batch_status(
     batch_job_id: UUID, user: CurrentUser = None, db: DatabaseSession = None
 ):
-    """Get status of a batch job."""
+    """Get status of a batch job with detailed file results."""
     try:
+        from sqlalchemy import select
+        from src.models.batch_job import BatchFile
+        
         batch_service = BatchProcessingService(db)
         batch_job = await batch_service.get_batch_job(batch_job_id, user.id)
 
         if not batch_job:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Batch job not found")
+
+        # Get detailed batch file results
+        result = await db.execute(
+            select(BatchFile).where(BatchFile.batch_job_id == batch_job_id)
+        )
+        batch_files = result.scalars().all()
+        
+        # Format file results
+        file_results = [
+            {
+                "id": str(bf.id),
+                "filename": bf.filename,
+                "status": bf.status,
+                "progress": bf.progress,
+                "size": bf.file_size,
+                "content_type": bf.content_type,
+                "result": bf.result,
+                "error": bf.error,
+                "current_step": bf.current_step,
+            }
+            for bf in batch_files
+        ]
 
         return {
             "batch_job_id": str(batch_job.id),
@@ -164,7 +192,7 @@ async def get_batch_status(
             "estimated_cost": batch_job.estimated_cost,
             "actual_cost": batch_job.actual_cost,
             "created_at": batch_job.created_at.isoformat(),
-            "files": batch_job.files,
+            "files": file_results,
         }
 
     except HTTPException:
